@@ -26,8 +26,8 @@ def s3_model_development(experiment_data_dict):
 def random_forest_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
     print("Training Random Forest...")
     param_grid = {
-        'max_depth': [10],
-        'n_estimators': [200],
+        'max_depth': [20],
+        'n_estimators': [100],
         'min_samples_split': [5],
     }
     # param_grid = {
@@ -64,9 +64,9 @@ def xgboost_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_va
     #     'min_child_weight': [1, 5],
     # }
     param_grid = {
-        'learning_rate': [0.01],
-        'n_estimators': [100],
-        'max_depth': [3],
+        'learning_rate': [0.05],
+        'n_estimators': [200],
+        'max_depth': [4],
         'min_child_weight': [5],
     }
     base_params = {

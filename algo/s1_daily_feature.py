@@ -103,7 +103,6 @@ def generate_curve_features(df):
 
     # BTC1 volatility (rolling 5-day)
     features["btc1_vol_5d"] = rolling_volatility(btc1, window=5)
-
     return features
 
 def generate_macro_features(df):
@@ -165,23 +164,19 @@ def generate_volume_features(df):
     return features
 
 if __name__ == "__main__":
-    adjusted_prices = pd.read_csv("data/adjusted_price.csv", parse_dates=True, dayfirst=True, index_col=0)
-    volume = pd.read_csv("data/volume.csv", parse_dates=True, dayfirst=True, index_col=0)
+    from utils.path_info import external_data_path
+    from pathlib import Path
+    adjusted_prices = pd.read_csv(Path(external_data_path, "adjusted_price.csv"), parse_dates=True, dayfirst=True, index_col=0)
+    volume = pd.read_csv(Path(external_data_path, "volume.csv"), parse_dates=True, dayfirst=True, index_col=0)
     volume = volume.reindex(adjusted_prices.index)
-    prices_ffill_cols = ["BTC1 Curncy",
-                  "BTC2 Curncy",
-                  "BTC3 Curncy",
-                  "BTC4 Curncy",
-                  "DXY Index",
-                  "GB3 Govt",
-                  "GB6 Govt",
-                  "GB12 Govt",
-                  "GT2 Govt",
-                  "GT5 Govt",
-                  "GT10 Govt",
-                  "XAU Curncy",
-                  "CO1 Comdty"]
+    prices_ffill_cols = [
+        "BTC1 Curncy", "BTC2 Curncy", "BTC3 Curncy", "BTC4 Curncy", "DXY Index",
+        "GB3 Govt", "GB6 Govt", "GB12 Govt", "GT2 Govt", "GT5 Govt", "GT10 Govt",
+        "XAU Curncy", "CO1 Comdty"
+    ]
+
     volume_ffill_cols = ["BTC1 Curncy", "BTC2 Curncy", "CO1 Comdty"]
+
     adjusted_prices[prices_ffill_cols] = adjusted_prices[prices_ffill_cols].ffill(limit=2)
     volume[volume_ffill_cols] = volume[volume_ffill_cols].ffill(limit=2)
     curve_features = generate_curve_features(adjusted_prices)
@@ -193,4 +188,3 @@ if __name__ == "__main__":
 
     volume_features = generate_volume_features(volume)
     features = pd.concat([curve_features, macro_features, energy_features, volume_features], axis=1)
-    print(features)

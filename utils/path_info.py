@@ -9,9 +9,11 @@ data_path = join(root_path, 'data')
 
 raw_data_path = Path(data_path, 'raw')
 label_data_path = Path(data_path, 'label')
+external_data_path = Path(data_path, 'external')
 
 ############
 # Make Dir #
 ############
 raw_data_path.mkdir(parents=True, exist_ok=True)
 label_data_path.mkdir(parents=True, exist_ok=True)
+external_data_path.mkdir(parents=True, exist_ok=True)

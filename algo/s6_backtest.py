@@ -19,13 +19,13 @@ def s6_backtest(labels, features, test_start, test_end, pred_frequency, training
     # Check kwargs #
     ################
     valid_model_class = ["XGBClassifier", "RandomForestClassifier"]
-    test_models = kwargs.get("test_models")
-    assert [i in MODEL_CONFIG.keys() for i in test_models]
-    assert [i.get("model_class") in valid_model_class for i in test_models]
+    backtest_test_models = kwargs.get("backtest_test_models")
+    assert [i in MODEL_CONFIG.keys() for i in backtest_test_models]
+    assert [i.get("model_class") in valid_model_class for i in backtest_test_models]
 
     rebalance_timestamps = pd.date_range(start=test_start, end=test_end, freq=pred_frequency)
     if training_mode == "expanding_window":
-        expanding_window_backtest(data_all, rebalance_timestamps, validation_percentage, test_models)
+        expanding_window_backtest(data_all, rebalance_timestamps, validation_percentage, backtest_test_models)
     elif training_mode == "rolling_window":
         rolling_window_backtest()
         raise NotImplementedError
