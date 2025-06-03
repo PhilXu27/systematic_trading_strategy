@@ -29,6 +29,24 @@ def curve_skewness(df):
     back_slope = df["BTC4 Curncy"] - df["BTC2 Curncy"]
     return back_slope - front_slope
 
+def slope_long(df, long_cols=["BTC11 Curncy", "BTC10 Curncy", "BTC9 Curncy", "BTC8 Curncy"], near_col="BTC1 Curncy"):
+    """
+    Compute slope proxy = (long_future - BTC1) / BTC1,
+    where long_future is BTC11, or BTC10, or BTC9 — whichever is available first row-wise.
+    """
+    # Start with NaNs
+    long_future = pd.Series(index=df.index, dtype=float)
+
+    # Fill long_future with BTC11 if available, else BTC10, else BTC9
+    for col in long_cols:
+        long_future = long_future.combine_first(df[col])
+
+    # Calculate slope using the best available long_future
+    slope = (long_future - df[near_col]) / df[near_col]
+
+    return slope
+
+
 def delta(series):
     """Computes first-order difference."""
     return series.diff()
@@ -67,7 +85,7 @@ def generate_curve_features(df):
     # Slope features
     features["slope_1m"] = slope(df, "BTC1 Curncy", "BTC2 Curncy", normalize=True)
     features["slope_3m"] = slope(df, "BTC1 Curncy", "BTC4 Curncy", normalize=True)
-    features["slope_10m"] = slope(df, "BTC1 Curncy", "BTC11 Curncy", normalize=True)
+    features["slope_10m_proxy"] = slope_long(df)
 
     # Curve curvature
     features["curve_curvature"] = curve_curvature(df, "BTC1 Curncy", "BTC2 Curncy", "BTC3 Curncy", normalize=False)
@@ -122,6 +140,7 @@ def generate_macro_features(df):
     return features
 
 def generate_energy_features(df):
+    df = df[["BTC1 Curncy", "ST27IA Index", "ST27AU Index", "ST27RA Index"]].dropna()
     features = pd.DataFrame(index=df.index)
 
     # Returns the ratio of industrial electricity price to BTC price.
@@ -144,3 +163,34 @@ def generate_volume_features(df):
     features['oil_volume'] = df['CO1 Comdty']
 
     return features
+
+if __name__ == "__main__":
+    adjusted_prices = pd.read_csv("data/adjusted_price.csv", parse_dates=True, dayfirst=True, index_col=0)
+    volume = pd.read_csv("data/volume.csv", parse_dates=True, dayfirst=True, index_col=0)
+    volume = volume.reindex(adjusted_prices.index)
+    prices_ffill_cols = ["BTC1 Curncy",
+                  "BTC2 Curncy",
+                  "BTC3 Curncy",
+                  "BTC4 Curncy",
+                  "DXY Index",
+                  "GB3 Govt",
+                  "GB6 Govt",
+                  "GB12 Govt",
+                  "GT2 Govt",
+                  "GT5 Govt",
+                  "GT10 Govt",
+                  "XAU Curncy",
+                  "CO1 Comdty"]
+    volume_ffill_cols = ["BTC1 Curncy", "BTC2 Curncy", "CO1 Comdty"]
+    adjusted_prices[prices_ffill_cols] = adjusted_prices[prices_ffill_cols].ffill(limit=2)
+    volume[volume_ffill_cols] = volume[volume_ffill_cols].ffill(limit=2)
+    curve_features = generate_curve_features(adjusted_prices)
+    macro_features = generate_macro_features(adjusted_prices)
+
+    energy_features = generate_energy_features(adjusted_prices)
+    energy_features = energy_features.reindex(curve_features.index)
+    energy_features.ffill(inplace=True)
+
+    volume_features = generate_volume_features(volume)
+    features = pd.concat([curve_features, macro_features, energy_features, volume_features], axis=1)
+    print(features)

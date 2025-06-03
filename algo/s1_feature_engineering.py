@@ -105,7 +105,6 @@ def generate_price_volume_feature(data):
 
     # Final cleanup
     features.ffill(inplace=True)
-    features.bfill(inplace=True)
 
     return features
 
@@ -114,4 +113,4 @@ if __name__ == "__main__":
     data = pd.read_csv("data/prices.csv", parse_dates=True, index_col=0)
     features = generate_price_volume_feature(data)
     print(features)
-    features.to_csv("data/basic_features.csv")
+    # features.to_csv("data/basic_features.csv")
