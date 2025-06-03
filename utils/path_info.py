@@ -7,9 +7,11 @@ configs_path = join(root_path, 'configs')
 results_path = join(root_path, 'results')
 data_path = join(root_path, 'data')
 
-raw_data_path = Path(join(data_path, 'raw'))
-asset_pool_data_path = join(data_path, 'asset_pool')
+raw_data_path = Path(data_path, 'raw')
+label_data_path = Path(data_path, 'label')
 
+############
+# Make Dir #
+############
 raw_data_path.mkdir(parents=True, exist_ok=True)
-
-
+label_data_path.mkdir(parents=True, exist_ok=True)

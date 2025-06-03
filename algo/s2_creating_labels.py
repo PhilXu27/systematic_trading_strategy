@@ -1,12 +1,20 @@
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm1
+from utils.path_info import label_data_path
+from pathlib import Path
 
 
-def s2_creating_labels(prices):
-    labels = trend_labels(prices["close"], (5, 20), look_forward=True)
+def s2_load_labels(file_name):
+    labels = pd.read_csv(Path(label_data_path,  f"{file_name}.csv"), index_col=0, parse_dates=True)
+    return labels
 
-    return
+
+def s2_creating_labels(prices, is_save_labels=True, file_name="default"):
+    labels = trend_labels(prices["close"], [6, 12, 24], look_forward=True)
+    if is_save_labels:
+        labels.to_csv(Path(label_data_path, f"{file_name}.csv"))
+    return labels
 
 
 def tValLinR(close):

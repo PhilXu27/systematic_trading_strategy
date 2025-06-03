@@ -1,0 +1,113 @@
+import pandas as pd
+from configs.GLOBAL_CONFIG import GLOBAL_RANDOM_STATE
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import ParameterGrid
+import xgboost as xgb
+from sklearn.metrics import accuracy_score
+
+
+def s3_model_development(experiment_data_dict):
+    X_train, y_train = experiment_data_dict.get("X_train"), experiment_data_dict.get("y_train")
+    X_hyper_train, y_hyper_train = experiment_data_dict.get("X_hyper_train"), experiment_data_dict.get("y_hyper_train")
+    X_val, y_val = experiment_data_dict.get("X_val"), experiment_data_dict.get("y_val")
+    X_test, y_test = experiment_data_dict.get("X_test"), experiment_data_dict.get("y_test")
+
+    rf_model = random_forest_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test)
+    xgb_model = xgboost_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test)
+
+    models = {
+        'Random Forest': rf_model,
+        'XGB Model': xgb_model,
+    }
+    return models
+
+
+def random_forest_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
+    print("Training Random Forest...")
+    param_grid = {
+        'max_depth': [10],
+        'n_estimators': [200],
+        'min_samples_split': [5],
+    }
+    # param_grid = {
+    #     'max_depth': [None, 10, 20],
+    #     'n_estimators': [100, 200, 500],
+    #     'min_samples_split': [2, 5],
+    # }
+    base_params = {
+        "random_state": GLOBAL_RANDOM_STATE, "min_samples_leaf": 2, "max_features": "sqrt",
+    }
+    best_rf, best_rf_score, best_params = ts_cv(
+        model_class=RandomForestClassifier,
+        base_params=base_params,
+        param_grid=param_grid,
+        X_train=X_hyper_train, y_train=y_hyper_train,
+        X_val=X_val, y_val=y_val,
+    )
+    # Predict on test set
+    rf_model = RandomForestClassifier(**best_params)
+    rf_model.fit(X_train, y_train)
+    y_pred = rf_model.predict(X_test)
+
+    test_acc = accuracy_score(y_test, y_pred)
+    print(f"Test Accuracy: {test_acc:.4f}")
+    return rf_model
+
+
+def xgboost_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
+    print("Training Random Forest...")
+    # param_grid = {
+    #     'learning_rate': [0.01, 0.05, 0.1],
+    #     'n_estimators': [100, 200],
+    #     'max_depth': [3, 4, 6],
+    #     'min_child_weight': [1, 5],
+    # }
+    param_grid = {
+        'learning_rate': [0.01],
+        'n_estimators': [100],
+        'max_depth': [3],
+        'min_child_weight': [5],
+    }
+    base_params = {
+        'random_state': GLOBAL_RANDOM_STATE,
+        'subsample': 0.8,
+        'colsample_bytree': 0.8,
+        'reg_alpha': 0.1,
+        'reg_lambda': 1.0,
+        'objective': 'binary:logistic',
+        'eval_metric': 'logloss',
+    }
+    best_rf, best_rf_score, best_params = ts_cv(
+        model_class=xgb.XGBClassifier,
+        base_params=base_params,
+        param_grid=param_grid,
+        X_train=X_hyper_train, y_train=y_hyper_train,
+        X_val=X_val, y_val=y_val,
+    )
+    # Predict on test set
+    xgb_model = xgb.XGBClassifier(**best_params)
+    xgb_model.fit(X_train, y_train)
+    y_pred = xgb_model.predict(X_test)
+
+    test_acc = accuracy_score(y_test, y_pred)
+    print(f"Test Accuracy: {test_acc:.4f}")
+    return xgb_model
+
+
+def ts_cv(model_class, base_params, param_grid, X_train, y_train, X_val, y_val):
+    best_model = None
+    best_score = -np.inf
+    best_params = None
+    for params in ParameterGrid(param_grid):
+        combined_params = {**base_params, **params}
+        print(f"Working on {combined_params}")
+        model = model_class(**combined_params)
+        model.fit(X_train, y_train)
+        score = model.score(X_val, y_val)  # or AUC, F1, etc.
+        if score > best_score:
+            best_score = score
+            best_model = model
+            best_params = combined_params
+    print(f"Best Score is: {best_score}, with params: {best_params}")
+    return best_model, best_score, best_params
