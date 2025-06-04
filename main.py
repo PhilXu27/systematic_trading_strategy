@@ -11,7 +11,7 @@ from utils.path_info import data_path
 import pandas as pd
 
 
-def main(is_local_features=False, is_local_labels=True, backtest_only=False, **kwargs):
+def main(is_local_features=False, is_generate_labels=True, is_backtest_only=False, **kwargs):
     general_start = "2018-01-01" #  "2018-01-01", "2020-01-01"
     warmup_end = "2018-03-31"
     train_end = "2020-12-31"
@@ -39,10 +39,12 @@ def main(is_local_features=False, is_local_labels=True, backtest_only=False, **k
     #######################
     # 2.  Creating Labels #
     #######################
-    if not is_local_labels:
-        labels = s2_creating_labels(prices, **kwargs)
+    if is_generate_labels:
+        curr_save_file = kwargs.get("curr_label_file", "default")
+        is_save_labels = kwargs.get("is_save_labels", True)
+        labels = s2_creating_labels(prices, is_save_labels=is_save_labels, file_name=curr_save_file)
     else:
-        curr_label_file = kwargs.get("curr_label_file")
+        curr_label_file = kwargs.get("curr_label_file", "default")
         labels = s2_load_labels(curr_label_file)
     label_start, label_end = (
         labels.index[0].strftime("%Y-%m-%d %H:%M:%S"),
@@ -60,32 +62,44 @@ def main(is_local_features=False, is_local_labels=True, backtest_only=False, **k
     #########################
     data_all, experiment_data_dict = s25_pre_run(labels, features, test_start, general_end, validation_percentage)
 
-    ########################
-    # 3. Model Development #
-    ########################
-    models = s3_model_development(experiment_data_dict)
+    if not is_backtest_only:
+        ########################
+        # 3. Model Development #
+        ########################
+        models = s3_model_development(experiment_data_dict)
 
-    #################################
-    # 4. Feature Important Analysis #
-    #################################
-    feature_important_results = s4_feature_important_analysis(models, experiment_data_dict)
+        #################################
+        # 4. Feature Important Analysis #
+        #################################
+        feature_important_results = s4_feature_important_analysis(models, experiment_data_dict)
 
-    #######################
-    # 5. Model Evaluation #
-    #######################
-    evaluation_results = s5_model_evaluation(models, experiment_data_dict)
-
-    ############################################
-    # 6. Backtest & Backtest Model Development #
-    ############################################
-    pred_frequency = "6h"
-    training_mode = "one_time_prediction"
-    # s6_backtest()
+        #######################
+        # 5. Model Evaluation #
+        #######################
+        evaluation_results = s5_model_evaluation(models, experiment_data_dict)
+    else:
+        ############################################
+        # 6. Backtest & Backtest Model Development #
+        ############################################
+        rebalance_frequency = "24h"
+        retrain_frequency = "144h"
+        training_mode = "parallel_expanding_window"
+        assert training_mode in ["expanding_window", "rolling_window", "parallel_expanding_window", ""]
+        s6_backtest(
+            labels, features,
+            test_start, general_end,
+            retrain_frequency, rebalance_frequency,
+            training_mode,
+            validation_percentage,
+            **kwargs
+        )
     return
 
 
 if __name__ == '__main__':
     main(
+        is_generate_labels=False,
+        is_backtest_only=True,
         **{
             "curr_label_file": "labels_6_12_24",
             "backtest_test_models": ["xgboost_simple"]

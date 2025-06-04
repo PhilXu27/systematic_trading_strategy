@@ -10,8 +10,9 @@ def s2_load_labels(file_name):
     return labels
 
 
-def s2_creating_labels(prices, is_save_labels=True, file_name="default"):
-    labels = trend_labels(prices["close"], [6, 12, 24], look_forward=True)
+def s2_creating_labels(prices, is_save_labels, file_name="default"):
+    labels = trend_labels(prices["close"], [6, 12, 18, 24, 48], look_forward=False)
+    # todo, check it later.
     if is_save_labels:
         labels.to_csv(Path(label_data_path, f"{file_name}.csv"))
     return labels

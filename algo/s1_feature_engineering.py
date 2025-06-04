@@ -28,6 +28,7 @@ def s1_feature_engineering(prices, start, end):
     hourly_features = generic_hourly_features(prices)
     daily_features = generic_daily_features(adjusted_prices, volume)
     monthly_features = generic_monthly_features(adjusted_prices)
+
     hourly_features = hourly_features.shift(1)
     daily_features = daily_features.shift(1)
     monthly_features = monthly_features.shift(1)
@@ -51,7 +52,6 @@ def simple_features(prices):
     features["range_over_close_lag_1"] = features["range_over_close_lag_1"].fillna(
         features["range_over_close_lag_1"].median()
     )
-
     return features
 
 
@@ -68,10 +68,12 @@ def generic_daily_features(adjusted_prices, volume):
     features_daily = pd.concat([curve_features, macro_features, volume_features], axis=1)
     return features_daily
 
+
 def generic_monthly_features(adjusted_prices):
     energy_features = generate_energy_features(adjusted_prices)
     features_monthly = pd.concat([energy_features], axis=1)
     return features_monthly
+
 
 def generate_curve_features(df):
     features = pd.DataFrame(index=df.index)

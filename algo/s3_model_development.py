@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import ParameterGrid
 import xgboost as xgb
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss
 
 
 def s3_model_development(experiment_data_dict):
@@ -38,12 +38,9 @@ def random_forest_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val
     base_params = {
         "random_state": GLOBAL_RANDOM_STATE, "min_samples_leaf": 2, "max_features": "sqrt",
     }
-    best_rf, best_rf_score, best_params = ts_cv(
-        model_class=RandomForestClassifier,
-        base_params=base_params,
-        param_grid=param_grid,
-        X_train=X_hyper_train, y_train=y_hyper_train,
-        X_val=X_val, y_val=y_val,
+    best_rf, best_rf_score, best_params = time_series_cv(
+        model_class=RandomForestClassifier, base_params=base_params, param_grid=param_grid,
+        X_train=X_hyper_train, y_train=y_hyper_train, X_val=X_val, y_val=y_val
     )
     # Predict on test set
     rf_model = RandomForestClassifier(**best_params)
@@ -78,13 +75,9 @@ def xgboost_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_va
         'objective': 'binary:logistic',
         'eval_metric': 'logloss',
     }
-    best_rf, best_rf_score, best_params = ts_cv(
-        model_class=xgb.XGBClassifier,
-        base_params=base_params,
-        param_grid=param_grid,
-        X_train=X_hyper_train, y_train=y_hyper_train,
-        X_val=X_val, y_val=y_val,
-    )
+    best_rf, best_rf_score, best_params = time_series_cv(model_class=xgb.XGBClassifier, base_params=base_params,
+                                                         param_grid=param_grid, X_train=X_hyper_train,
+                                                         y_train=y_hyper_train, X_val=X_val, y_val=y_val)
     # Predict on test set
     xgb_model = xgb.XGBClassifier(**best_params)
     xgb_model.fit(X_train, y_train)
@@ -95,7 +88,9 @@ def xgboost_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_va
     return xgb_model
 
 
-def ts_cv(model_class, base_params, param_grid, X_train, y_train, X_val, y_val):
+def time_series_cv(model_class, base_params, param_grid, X_train, y_train, X_val, y_val, principle="score"):
+    assert principle in ["score", "AUC", "F1"]
+
     best_model = None
     best_score = -np.inf
     best_params = None
@@ -104,7 +99,25 @@ def ts_cv(model_class, base_params, param_grid, X_train, y_train, X_val, y_val):
         print(f"Working on {combined_params}")
         model = model_class(**combined_params)
         model.fit(X_train, y_train)
-        score = model.score(X_val, y_val)  # or AUC, F1, etc.
+        if principle == "score":
+            score = model.score(X_val, y_val)  # or AUC, F1, etc.
+        elif principle == "accuracy":
+            # by default the model.score is accuracy, but in case the user intentionally type in accuracy.
+            y_pred = model.predict(X_val)
+            score = accuracy_score(y_val, y_pred)
+        elif principle == "AUC":
+            y_proba = model.predict_proba(X_val)[:, 1]
+            score = roc_auc_score(y_val, y_proba)
+        elif principle == "F1":
+            y_pred = model.predict(X_val)
+            score = f1_score(y_val, y_pred)
+        elif principle == "log_loss":
+            y_proba = model.predict_proba(X_val)
+            score = -log_loss(y_val, y_proba)
+            # log, so take the negative sign
+        else:
+            raise ValueError(f"Unknown principle: {principle}")
+
         if score > best_score:
             best_score = score
             best_model = model
