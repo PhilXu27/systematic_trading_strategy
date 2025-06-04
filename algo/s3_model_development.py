@@ -56,7 +56,7 @@ def random_forest_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val
 
 
 def xgboost_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
-    print("Training Random Forest...")
+    print("Training XGBoost...")
     # param_grid = {
     #     'learning_rate': [0.01, 0.05, 0.1],
     #     'n_estimators': [100, 200],
