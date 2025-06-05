@@ -193,6 +193,7 @@ def generate_price_volume_feature(data):
     features['atr_24'] = AverageTrueRange(high=data['high'], low=data['low'], close=data['close'], window=24).average_true_range()
     bb = BollingerBands(close=data['close'], window=24, window_dev=2)
     features['bb_width_24'] = (bb.bollinger_hband() - bb.bollinger_lband()) / bb.bollinger_mavg()
+
     features['ema_6'] = EMAIndicator(close=data['close'], window=6).ema_indicator()
     features['ema_24'] = EMAIndicator(close=data['close'], window=24).ema_indicator()
     macd = MACD(close=data['close'])
