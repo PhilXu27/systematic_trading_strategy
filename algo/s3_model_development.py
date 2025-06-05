@@ -1,8 +1,10 @@
 import pandas as pd
 from configs.GLOBAL_CONFIG import GLOBAL_RANDOM_STATE
 import numpy as np
+from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import ParameterGrid
 import xgboost as xgb
 import lightgbm as lgb
@@ -20,12 +22,16 @@ def s3_model_development(experiment_data_dict):
     gb_model = gradient_boosting_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test)
     xgb_model = xgboost_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test)
     lgbm_model = lightgbm_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test)
+    logit_model = logistic_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test)
+    mlp_model = mlp_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test)
 
     models = {
         'Random Forest': rf_model,
         'Gradient Boosting Model': gb_model,
         'XGB Model': xgb_model,
         'LGBM Model': lgbm_model,
+        'Logit Model': logit_model,
+        'MLP Model': mlp_model,
     }
     print("S3 Model Development: One Time Prediction, Ends")
     return models
@@ -63,7 +69,7 @@ def gradient_boosting_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X
     print("Training Gradient Boosting...")
     param_grid = {
         'max_depth': [20],
-        'n_estimators': [100],
+        'n_estimators': [200],
         'min_samples_split': [5],
     }
     # param_grid = {
@@ -128,10 +134,16 @@ def lightgbm_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_v
     print("Training LightGBM...")
     # param_grid = {
     #     'learning_rate': [0.01, 0.05, 0.1],
-    #     'n_estimators': [100, 200],
-    #     'max_depth': [3, 4, 6],
+    #     'n_estimators': [100, 200, 500],
+    #     'max_depth': [3, 4, 6, 8],
     #     'min_child_weight': [1, 5],
     # }
+    param_grid = {
+        'learning_rate': [0.01],
+        'n_estimators': [100],
+        'max_depth': [6],
+        'min_child_weight': [5],
+    }
     param_grid = {
         'learning_rate': [0.01],
         'n_estimators': [100],
@@ -187,6 +199,68 @@ def svm_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X
     test_acc = accuracy_score(y_test, y_pred)
     print(f"Test Accuracy: {test_acc:.4f}")
     return svm_model
+
+def logistic_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
+    print("Training Logistic Regression...")
+    # param_grid = {
+    #     'C': [0.1, 1, 10, 100],
+    #     'max_iter': [100, 500, 1000],
+    # }
+    param_grid = {
+        'C': [0.1],
+        'max_iter': [100],
+    }
+    base_params = {
+        'random_state': GLOBAL_RANDOM_STATE,
+        'penalty': 'l2',
+        'solver': 'liblinear',
+    }
+    best_rf, best_rf_score, best_params = time_series_cv(model_class=LogisticRegression, base_params=base_params,
+                                                         param_grid=param_grid, X_train=X_hyper_train,
+                                                         y_train=y_hyper_train, X_val=X_val, y_val=y_val)
+    # Predict on test set
+    logit_model = LogisticRegression(**best_params)
+    logit_model.fit(X_train, y_train)
+    y_pred = logit_model.predict(X_test)
+
+    test_acc = accuracy_score(y_test, y_pred)
+    print(f"Test Accuracy: {test_acc:.4f}")
+    return logit_model
+
+def mlp_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
+    print("Training MLP...")
+    # param_grid = {
+    #     'hidden_layer_sizes': [(50,), (100,), (50, 50), (50, 100), (50, 100, 100)],
+    #     'alpha': [0.001, 0.01, 0.1],
+    #     'learning_rate': ['constant', 'adaptive'],
+    #     'learning_rate_init': [0.001, 0.005, 0.01],
+    #     'max_iter': [100, 150, 200],
+    # }
+    param_grid = {
+        'hidden_layer_sizes': [(100,)], 
+        'alpha': [0.1],
+        'learning_rate': ['constant'],
+        'learning_rate_init': [0.01],
+        'max_iter': [100],
+    }
+    base_params = {
+        'random_state': GLOBAL_RANDOM_STATE,
+        'activation': 'relu',
+        'solver': 'adam',
+        'shuffle': False,
+        'verbose': False,
+    }
+    best_rf, best_rf_score, best_params = time_series_cv(model_class=MLPClassifier, base_params=base_params,
+                                                         param_grid=param_grid, X_train=X_hyper_train,
+                                                         y_train=y_hyper_train, X_val=X_val, y_val=y_val)
+    # Predict on test set
+    mlp_model = MLPClassifier(**best_params)
+    mlp_model.fit(X_train, y_train)
+    y_pred = mlp_model.predict(X_test)
+
+    test_acc = accuracy_score(y_test, y_pred)
+    print(f"Test Accuracy: {test_acc:.4f}")
+    return mlp_model
 
 def time_series_cv(model_class, base_params, param_grid, X_train, y_train, X_val, y_val, principle="score"):
     assert principle in ["score", "AUC", "F1"]
