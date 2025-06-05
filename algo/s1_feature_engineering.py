@@ -60,6 +60,7 @@ def generic_hourly_features(prices):
     features_hourly = pd.concat([price_volume_features], axis=1)
     features_hourly['hour_of_day'] = features_hourly.index.hour
     features_hourly['day_of_week'] = features_hourly.index.dayofweek
+    features_hourly['is_weekend'] = features_hourly.index.dayofweek.isin([5, 6]).astype(int)
     features_hourly['is_month_end'] = features_hourly.index.is_month_end.astype(int)
     return features_hourly
 
