@@ -2,3 +2,6 @@ lightgbm
 pandas
 numpy
 sckit-learn
+hmmlearn
+scipy
+ta

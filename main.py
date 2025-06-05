@@ -127,11 +127,11 @@ def main(
 if __name__ == '__main__':
     main(
         is_generate_features=True,
-        is_generate_labels=False,
+        is_generate_labels=True,
         is_generate_backtest_signals=True,
-        is_backtest_only=False,
+        is_backtest_only=True,
         **{
             "curr_label_file": "labels_6_12_18_24_48",
-            "backtest_test_models": ["simple_xgb_boost"]  # simple_random_forest
+            "backtest_test_models": ["xgb_boost", "random_forest", "gradient_boost", "lightgbm"]  # simple_random_forest
         }
     )
