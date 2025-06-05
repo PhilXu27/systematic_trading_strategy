@@ -8,7 +8,7 @@ def s25_pre_run(
     # Merge Labels with Features #
     ##############################
     bins = labels[["bin"]]
-    bins = bins.applymap(lambda x: 1.0 if x == 1.0 else 0.0)
+    bins = bins.map(lambda x: 1.0 if x == 1.0 else 0.0)
     bins.columns = ["label"]
     valid_time_index = bins.index.tolist()
     features = features.loc[valid_time_index]

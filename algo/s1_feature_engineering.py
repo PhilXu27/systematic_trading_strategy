@@ -58,6 +58,9 @@ def simple_features(prices):
 def generic_hourly_features(prices):
     price_volume_features = generate_price_volume_feature(prices)
     features_hourly = pd.concat([price_volume_features], axis=1)
+    features_hourly['hour_of_day'] = features_hourly.index.hour
+    features_hourly['day_of_week'] = features_hourly.index.dayofweek
+    features_hourly['is_month_end'] = features_hourly.index.is_month_end.astype(int)
     return features_hourly
 
 
@@ -65,7 +68,9 @@ def generic_daily_features(adjusted_prices, volume):
     curve_features = generate_curve_features(adjusted_prices)
     macro_features = generate_macro_features(adjusted_prices)
     volume_features = generate_volume_features(volume)
-    features_daily = pd.concat([curve_features, macro_features, volume_features], axis=1)
+    vix = pd.read_csv(Path("data", "external", "VIX Index.csv"), parse_dates=True, index_col=0)
+    vix = vix.reindex(curve_features.index)
+    features_daily = pd.concat([curve_features, macro_features, volume_features, vix], axis=1)
     return features_daily
 
 
@@ -97,6 +102,8 @@ def generate_curve_features(df):
     features["btc1_ret_1d"] = log_return(btc1, period=1)
     features["btc1_ret_3d"] = log_return(btc1, period=3)
     features["btc1_ret_5d"] = log_return(btc1, period=5)
+    features["btc1_ret_10d"] = log_return(btc1, period=10)
+    features["btc1_ret_30d"] = log_return(btc1, period=30)
 
     # BTC1 volatility (rolling 5-day)
     features["btc1_vol_5d"] = rolling_volatility(btc1, window=5)
@@ -169,30 +176,31 @@ def generate_price_volume_feature(data):
     features = pd.DataFrame(index=data.index)
 
     # Basic features
+    features['volume'] = data['volume']
     features['roc_12'] = ROCIndicator(close=data['close'], window=12).roc()
-    features['rsi_14'] = RSIIndicator(close=data['close'], window=14).rsi()
+    features['rsi_24'] = RSIIndicator(close=data['close'], window=24).rsi()
 
     # Volatility and trend
-    features['atr_14'] = AverageTrueRange(high=data['high'], low=data['low'], close=data['close'], window=14).average_true_range()
+    features['atr_24'] = AverageTrueRange(high=data['high'], low=data['low'], close=data['close'], window=24).average_true_range()
     bb = BollingerBands(close=data['close'], window=20, window_dev=2)
     features['bb_width'] = (bb.bollinger_hband() - bb.bollinger_lband()) / bb.bollinger_mavg()
-    features['ema_12'] = EMAIndicator(close=data['close'], window=12).ema_indicator()
-    features['ema_26'] = EMAIndicator(close=data['close'], window=26).ema_indicator()
+    features['ema_6'] = EMAIndicator(close=data['close'], window=6).ema_indicator()
+    features['ema_24'] = EMAIndicator(close=data['close'], window=24).ema_indicator()
     macd = MACD(close=data['close'])
     features['macd'] = macd.macd()
     features['macd_signal'] = macd.macd_signal()
 
     # SMAs and crossover
-    features['sma_50'] = data['close'].rolling(50).mean()
-    features['sma_200'] = data['close'].rolling(200).mean()
-    features['cross_signal'] = np.where(features['sma_50'] > features['sma_200'], 1, np.where(features['sma_50'] < features['sma_200'], -1, 0))
+    features['sma_6'] = data['close'].rolling(6).mean()
+    features['sma_24'] = data['close'].rolling(24).mean()
+    features['cross_signal'] = np.where(features['sma_6'] > features['sma_24'], 1, np.where(features['sma_6'] < features['sma_24'], -1, 0))
 
     # Serial correlation
     for lag in [1, 2, 5]:
         features[f'autocorr_{lag}'] = data['returns'].rolling(20).corr(data['returns'].shift(lag))
 
     # Lagged returns & volume
-    for lag in [1, 2, 3, 5]:
+    for lag in [1, 2, 3, 5,]:
         features[f'lag_return_{lag}'] = data['returns'].shift(lag)
     for lag in [1, 2, 3]:
         features[f'lag_volume_{lag}'] = data['volume'].shift(lag)
