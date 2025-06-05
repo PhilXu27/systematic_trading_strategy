@@ -1,3 +1,5 @@
+from pathlib import Path
+from utils.path_info import features_data_path
 import pandas as pd
 from algo.s1_helper import (
     returns, liquidity_proxy, realized_volatility, trend_duration, volume_volatility_ratio, compute_hmm_regime,
@@ -12,7 +14,12 @@ from pathlib import Path
 from utils.path_info import external_data_path
 
 
-def s1_feature_engineering(prices, start, end):
+def s1_load_features(features_file="default"):
+    features = pd.read_csv(Path(features_data_path, features_file + ".csv"), index_col=0, parse_dates=True)
+    return features
+
+def s1_feature_engineering(prices, start, end, features_save_file="default"):
+    print("S1 Feature Engineering, Starts")
     # features = simple_features(prices)
     adjusted_prices = pd.read_csv(
         Path(external_data_path, "adjusted_price.csv"),
@@ -38,6 +45,8 @@ def s1_feature_engineering(prices, start, end):
     # features = align_daily_to_hourly(hourly_features, daily_features)
     features = pd.concat([hourly_features, daily_features, monthly_features], axis=1)
     features = features.dropna()
+    features.to_csv(Path(features_data_path, f"{features_save_file}.csv"))
+    print("S1 Feature Engineering, Ends")
     return features
 
 
@@ -116,7 +125,6 @@ def generate_macro_features(df):
     features = pd.DataFrame(index=df.index)
 
     # DXY features
-    features["delta_dxy"] = delta(df["DXY Index"])
     features["dxy_ret_1d"] = log_return(df["DXY Index"], period=1)
 
     # Yield curve slope (US 10Y - 2Y)
@@ -183,8 +191,8 @@ def generate_price_volume_feature(data):
 
     # Volatility and trend
     features['atr_24'] = AverageTrueRange(high=data['high'], low=data['low'], close=data['close'], window=24).average_true_range()
-    bb = BollingerBands(close=data['close'], window=20, window_dev=2)
-    features['bb_width'] = (bb.bollinger_hband() - bb.bollinger_lband()) / bb.bollinger_mavg()
+    bb = BollingerBands(close=data['close'], window=24, window_dev=2)
+    features['bb_width_24'] = (bb.bollinger_hband() - bb.bollinger_lband()) / bb.bollinger_mavg()
     features['ema_6'] = EMAIndicator(close=data['close'], window=6).ema_indicator()
     features['ema_24'] = EMAIndicator(close=data['close'], window=24).ema_indicator()
     macd = MACD(close=data['close'])

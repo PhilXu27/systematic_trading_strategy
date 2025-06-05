@@ -8,6 +8,7 @@ from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss
 
 
 def s3_model_development(experiment_data_dict):
+    print("S3 Model Development: One Time Prediction, Starts")
     X_train, y_train = experiment_data_dict.get("X_train"), experiment_data_dict.get("y_train")
     X_hyper_train, y_hyper_train = experiment_data_dict.get("X_hyper_train"), experiment_data_dict.get("y_hyper_train")
     X_val, y_val = experiment_data_dict.get("X_val"), experiment_data_dict.get("y_val")
@@ -20,21 +21,22 @@ def s3_model_development(experiment_data_dict):
         'Random Forest': rf_model,
         'XGB Model': xgb_model,
     }
+    print("S3 Model Development: One Time Prediction, Ends")
     return models
 
 
 def random_forest_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
     print("Training Random Forest...")
-    param_grid = {
-        'max_depth': [20],
-        'n_estimators': [100],
-        'min_samples_split': [5],
-    }
     # param_grid = {
-    #     'max_depth': [None, 10, 20],
-    #     'n_estimators': [100, 200, 500],
-    #     'min_samples_split': [2, 5],
+    #     'max_depth': [20],
+    #     'n_estimators': [100],
+    #     'min_samples_split': [5],
     # }
+    param_grid = {
+        'max_depth': [None, 10, 20],
+        'n_estimators': [100, 200, 500],
+        'min_samples_split': [2, 5],
+    }
     base_params = {
         "random_state": GLOBAL_RANDOM_STATE, "min_samples_leaf": 2, "max_features": "sqrt",
     }
@@ -54,18 +56,18 @@ def random_forest_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val
 
 def xgboost_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
     print("Training XGBoost...")
-    # param_grid = {
-    #     'learning_rate': [0.01, 0.05, 0.1],
-    #     'n_estimators': [100, 200],
-    #     'max_depth': [3, 4, 6],
-    #     'min_child_weight': [1, 5],
-    # }
     param_grid = {
-        'learning_rate': [0.05],
-        'n_estimators': [200],
-        'max_depth': [4],
-        'min_child_weight': [5],
+        'learning_rate': [0.01, 0.05, 0.1],
+        'n_estimators': [100, 200],
+        'max_depth': [3, 4, 6],
+        'min_child_weight': [1, 5],
     }
+    # param_grid = {
+    #     'learning_rate': [0.05],
+    #     'n_estimators': [200],
+    #     'max_depth': [4],
+    #     'min_child_weight': [5],
+    # }
     base_params = {
         'random_state': GLOBAL_RANDOM_STATE,
         'subsample': 0.8,

@@ -7,15 +7,22 @@ from pathlib import Path
 
 def s2_load_labels(file_name):
     labels = pd.read_csv(Path(label_data_path,  f"{file_name}.csv"), index_col=0, parse_dates=True)
-    return labels
+    forward_looking_labels = pd.read_csv(
+        Path(label_data_path,  f"forward_looking_{file_name}.csv"), index_col=0, parse_dates=True
+    )
+    return labels, forward_looking_labels
 
 
 def s2_creating_labels(prices, is_save_labels, file_name="default"):
-    labels = trend_labels(prices["close"], [6, 12, 18, 24, 48], look_forward=False)
-    # todo, check it later.
+    print("S2 Creating Labels, Starts")
+    observation_period = [6, 12, 18, 24, 48]
+    labels = trend_labels(prices["close"], observation_period, look_forward=False)
+    forward_looking_labels = trend_labels(prices["close"], observation_period, look_forward=True)
     if is_save_labels:
         labels.to_csv(Path(label_data_path, f"{file_name}.csv"))
-    return labels
+        forward_looking_labels.to_csv(Path(label_data_path, f"forward_looking_{file_name}.csv"))
+    print("S2 Creating Labels, Ends")
+    return labels, forward_looking_labels
 
 
 def tValLinR(close):

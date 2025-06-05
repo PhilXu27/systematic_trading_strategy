@@ -4,6 +4,7 @@ from configs.GLOBAL_CONFIG import GLOBAL_RANDOM_STATE
 from sklearn.inspection import permutation_importance
 
 def s4_feature_important_analysis(models, experiment_data_dict):
+    print("S4 Feature Important Analysis, Starts")
     X_train, y_train = experiment_data_dict["X_train"], experiment_data_dict["y_train"]
     X_test, y_test = experiment_data_dict["X_test"], experiment_data_dict["y_test"]
 
@@ -14,6 +15,7 @@ def s4_feature_important_analysis(models, experiment_data_dict):
             "pfi": plot_permutation_importance(model, model_name, X_train, y_train, X_test, y_test)
         }
         feature_important_results[model_name] = fi_metrics
+    print("S4 Feature Important Analysis, Ends")
     return feature_important_results
 
 def plot_mdi_importance(model, model_name, X_train, n_features=20):

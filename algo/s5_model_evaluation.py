@@ -3,6 +3,7 @@ from sklearn.metrics import roc_auc_score, accuracy_score, \
 
 
 def s5_model_evaluation(models, experiment_data_dict):
+    print("S5 Model Evaluation, Starts")
     X_train, y_train = experiment_data_dict["X_train"], experiment_data_dict["y_train"]
     X_test, y_test = experiment_data_dict["X_test"], experiment_data_dict["y_test"]
 
@@ -12,6 +13,7 @@ def s5_model_evaluation(models, experiment_data_dict):
         metrics = evaluate_model(model, X_train, y_train, X_test, y_test, model_name)
         evaluation_results.append(metrics)
         print(f"{model_name} - Test AUC: {metrics['Test AUC']:.4f}")
+    print("S5 Model Evaluation, Ends")
     return evaluation_results
 
 

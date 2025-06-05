@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from utils.path_info import results_path
+from utils.path_info import results_path, signals_data_path
 from configs.MODEL_CONFIG import MODEL_CONFIG
 from xgboost import XGBClassifier
 from algo.s3_model_development import time_series_cv
@@ -18,7 +18,17 @@ def backtest_data_prepare(labels, features):
     data_all = pd.concat([bins, features], axis=1)
     return data_all
 
-def s6_backtest(
+
+def s6_load_backtest_signals(**kwargs):
+    backtest_test_models = kwargs.get("backtest_test_models")
+    all_predictions = {}
+    for model in backtest_test_models:
+        signals = pd.read_csv(Path(signals_data_path, model + ".csv"), index_col=0, parse_dates=True)
+        all_predictions[model] = signals
+    return all_predictions
+
+
+def s6_backtest_model_development(
         labels, features,
         test_start, test_end,
         retrain_frequency, rebalance_frequency,
@@ -42,17 +52,22 @@ def s6_backtest(
     rebalance_timestamps = combined_timestamps
 
     if training_mode == "expanding_window":
-        expanding_window_backtest(
+        all_predictions = expanding_window_backtest(
             data_all, retrain_timestamps, rebalance_timestamps, validation_percentage, backtest_test_models
         )
     elif training_mode == "rolling_window":
         rolling_window_backtest()
         raise NotImplementedError
     elif training_mode == "parallel_expanding_window":
-        parallel_backtest(
+        all_predictions = parallel_backtest(
             data_all, retrain_timestamps, rebalance_timestamps, validation_percentage, backtest_test_models
         )
-    return
+    else:
+        raise ValueError
+    for model in backtest_test_models:
+        signals = all_predictions[model]
+        signals.to_csv(Path(signals_data_path, f"{model}.csv"))
+    return all_predictions
 
 
 def run_batch(model_name, model_config, batch_index, data_all, validation_percentage, rebalance_ts_batch):
@@ -188,9 +203,6 @@ def expanding_window_backtest(
             curr_pred["true"] = y_test
             curr_pred["pred"] = y_pred
             pred_df = pd.concat([pred_df, curr_pred], axis=0)
-        test_save_path = Path(results_path, "test")
-        test_save_path.mkdir(parents=True, exist_ok=True)
-        pred_df.to_csv(Path(test_save_path, f"{model}.csv"))
         all_predictions[model] = pred_df
     return all_predictions
 
