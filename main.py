@@ -90,9 +90,9 @@ def main(
         ############################################
         # 6. Backtest & Backtest Model Development #
         ############################################
-        rebalance_frequency = "120h"
-        retrain_frequency = "240h"
-        training_mode = "parallel_rolling_window"
+        rebalance_frequency = "3h"
+        retrain_frequency = "24h"
+        training_mode = "parallel_expanding_window"
         assert training_mode in [
             "expanding_window", "rolling_window",
             "parallel_expanding_window", "parallel_rolling_window"
@@ -125,13 +125,15 @@ def main(
 
 
 if __name__ == '__main__':
+    curr_test_models = ["xgb_boost"]  # ["xgb_boost", "random_forest", "gradient_boost", "lightgbm"]
+    
     main(
-        is_generate_features=True,
-        is_generate_labels=True,
+        is_generate_features=False,
+        is_generate_labels=False,
         is_generate_backtest_signals=True,
         is_backtest_only=True,
         **{
             "curr_label_file": "labels_6_12_18_24_48",
-            "backtest_test_models": ["xgb_boost", "random_forest", "gradient_boost", "lightgbm"]  # simple_random_forest
+            "backtest_test_models": curr_test_models  # simple_random_forest
         }
     )

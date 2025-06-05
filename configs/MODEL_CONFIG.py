@@ -15,7 +15,7 @@ MODEL_CONFIG = {
         },
         "param_grid": {
             "learning_rate": [0.01],
-            "n_estimators": [100, 200],
+            "n_estimators": [100],
             "max_depth": [3, 6],
             "min_child_weight": [5]
         }
@@ -29,8 +29,8 @@ MODEL_CONFIG = {
             "max_features": "sqrt"
         },
         "param_grid": {
-            "max_depth": [None, 10, 20],
-            "n_estimators": [100, 200],
+            "max_depth": [None, 10],
+            "n_estimators": [100],
             "min_samples_split": [2, 5]
         }
     },
@@ -43,7 +43,7 @@ MODEL_CONFIG = {
             "max_features": "sqrt",
         },
         "param_grid": {
-            'max_depth': [None, 10, 20],
+            'max_depth': [None, 10],
             'n_estimators': [100, 200],
             'min_samples_split': [2, 5],
         }
@@ -63,8 +63,7 @@ MODEL_CONFIG = {
         "param_grid": {
             'learning_rate': [0.01, 0.05],
             'n_estimators': [100, 200],
-            'max_depth': [3, 6],
-            'min_child_weight': [1, 5],
+            'max_depth': [3, 6]
         }
     }
 }

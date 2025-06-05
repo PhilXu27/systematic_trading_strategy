@@ -1,7 +1,7 @@
 lightgbm
 pandas
 numpy
-sckit-learn
+scikit-learn
 hmmlearn
 scipy
 ta
