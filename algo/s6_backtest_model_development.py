@@ -1,13 +1,13 @@
 import pandas as pd
 from pathlib import Path
-from utils.path_info import results_path, signals_data_path
+from utils.path_info import results_path, signals_results_path
 from configs.MODEL_CONFIG import MODEL_CONFIG
 from xgboost import XGBClassifier
 from algo.s3_model_development import time_series_cv
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from multiprocessing import Pool
 import multiprocessing
-
+from lightgbm import LGBMClassifier
 
 def backtest_data_prepare(labels, features):
     bins = labels[["bin"]]
@@ -19,11 +19,11 @@ def backtest_data_prepare(labels, features):
     return data_all
 
 
-def s6_load_backtest_signals(**kwargs):
+def s6_load_backtest_signals(backtest_save_prefix, **kwargs):
     backtest_test_models = kwargs.get("backtest_test_models")
     all_predictions = {}
     for model in backtest_test_models:
-        signals = pd.read_csv(Path(signals_data_path, model + ".csv"), index_col=0, parse_dates=True)
+        signals = pd.read_csv(Path(backtest_save_prefix, model + ".csv"), index_col=0, parse_dates=True)
         all_predictions[model] = signals
     return all_predictions
 
@@ -34,13 +34,17 @@ def s6_backtest_model_development(
         retrain_frequency, rebalance_frequency,
         training_mode,
         validation_percentage,
+        backtest_save_prefix,
         **kwargs
 ):
+    signal_save_path = Path(signals_results_path, backtest_save_prefix)
+    signal_save_path.mkdir(parents=True, exist_ok=True)
+
     data_all = backtest_data_prepare(labels, features)
     ################
     # Check kwargs #
     ################
-    valid_model_class = ["XGBClassifier", "RandomForestClassifier"]
+    valid_model_class = ["XGBClassifier", "RandomForestClassifier", "GradientBoostingClassifier", "LGBMClassifier"]
     backtest_test_models = kwargs.get("backtest_test_models")
     assert all([i in MODEL_CONFIG.keys() for i in backtest_test_models])
     assert all([MODEL_CONFIG.get(i).get("model_class") in valid_model_class for i in backtest_test_models])
@@ -77,7 +81,7 @@ def s6_backtest_model_development(
         raise ValueError
     for model in backtest_test_models:
         signals = all_predictions[model]
-        signals.to_csv(Path(signals_data_path, f"{model}.csv"))
+        signals.to_csv(Path(signal_save_path, f"{model}.csv"))
     return all_predictions
 
 
@@ -266,7 +270,6 @@ def parallel_backtest(
 
         model_dfs = [_[2] for _ in sorted(results, key=lambda x: x[1])]
         full_model_df = pd.concat(model_dfs).sort_index()
-        full_model_df.to_csv(Path(results_path, "test", f"{model}.csv"))
         all_predictions[model] = full_model_df
 
     return all_predictions
@@ -436,3 +439,30 @@ def simple_xgb_boost(
     y_pred = xgb_model.predict(X_test)
     return xgb_model, y_pred
 
+def simple_gradient_boost(
+        model_class, base_params, param_grid,
+        X_train, y_train, X_hyper_train, y_hyper_train,
+        X_val, y_val, X_test, y_test
+):
+    best_rf, best_rf_score, best_params = time_series_cv(
+        model_class=model_class, base_params=base_params, param_grid=param_grid,
+        X_train=X_hyper_train, y_train=y_hyper_train, X_val=X_val, y_val=y_val
+    )
+    xgb_model = GradientBoostingClassifier(**best_params)
+    xgb_model.fit(X_train, y_train)
+    y_pred = xgb_model.predict(X_test)
+    return xgb_model, y_pred
+
+def simple_lightgbm(
+        model_class, base_params, param_grid,
+        X_train, y_train, X_hyper_train, y_hyper_train,
+        X_val, y_val, X_test, y_test
+):
+    best_rf, best_rf_score, best_params = time_series_cv(
+        model_class=model_class, base_params=base_params, param_grid=param_grid,
+        X_train=X_hyper_train, y_train=y_hyper_train, X_val=X_val, y_val=y_val
+    )
+    xgb_model = LGBMClassifier(**best_params)
+    xgb_model.fit(X_train, y_train)
+    y_pred = xgb_model.predict(X_test)
+    return xgb_model, y_pred

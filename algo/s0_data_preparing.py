@@ -17,13 +17,31 @@ def s0_data_prepare():
     #################################
     # Feature Related External Data #
     #################################
+    adjusted_price_path = Path(external_data_path, "adjusted_price.csv")
+    volume_path = Path(external_data_path, "volume.csv")
+    vix_path = Path(external_data_path, "VIX Index.csv")
+
+    if not exists(adjusted_price_path):
+        url = "https://drive.google.com/uc?id=1KPmv-U3c6LfZ4RN5nmtGa2w2dAUKw-9q"
+        adjusted_price = pd.read_csv(url, index_col=0, parse_dates=True, dayfirst=True)
+        adjusted_price.to_csv(adjusted_price_path)
+
+    if not exists(volume_path):
+        url = "https://drive.google.com/uc?id=1KZknBvrldqVscZXqx4waqt29Zhi4TB0c"
+        volume = pd.read_csv(url, index_col=0, parse_dates=True, dayfirst=True)
+        volume.to_csv(volume_path)
+
+    if not exists(vix_path):
+        url = "https://drive.google.com/uc?id=1JDf-EihZ0raisD750uUIF27slYNHk45l"
+        vix = pd.read_csv(url, index_col=0, parse_dates=True, dayfirst=True)
+        vix.to_csv(vix_path)
 
     return prices
 
 
 def load_external_data():
-    adjusted_prices = pd.read_csv(Path(external_data_path, "adjusted_price.csv"), parse_dates=True, dayfirst=True, index_col=0)
-    volume = pd.read_csv(Path(external_data_path, "volume.csv"), parse_dates=True, dayfirst=True, index_col=0)
+    adjusted_prices = pd.read_csv(Path(external_data_path, "adjusted_price.csv"), parse_dates=True, index_col=0)
+    volume = pd.read_csv(Path(external_data_path, "volume.csv"), parse_dates=True, index_col=0)
     volume = volume.reindex(adjusted_prices.index)
     prices_ffill_cols = [
         "BTC1 Curncy", "BTC2 Curncy", "BTC3 Curncy", "BTC4 Curncy", "DXY Index",

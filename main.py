@@ -97,6 +97,8 @@ def main(
             "expanding_window", "rolling_window",
             "parallel_expanding_window", "parallel_rolling_window"
         ]
+        backtest_save_prefix = f"rebalance_{rebalance_frequency}_retrain_{retrain_frequency}_mode_{training_mode}"
+
         # parallel_rolling_window todo later.
         if is_generate_backtest_signals:
             backtest_model_predictions = s6_backtest_model_development(
@@ -105,28 +107,29 @@ def main(
                 retrain_frequency, rebalance_frequency,
                 training_mode,
                 validation_percentage,
+                backtest_save_prefix,
                 **kwargs
             )
         else:
-            backtest_model_predictions = s6_load_backtest_signals(**kwargs)
+            backtest_model_predictions = s6_load_backtest_signals(backtest_save_prefix, **kwargs)
         ###################################
         # 7. Backtest Portfolio Formation #
         ###################################
-        portfolio_info, portfolio_values = s7_backtest_portfolio_formation(prices, backtest_model_predictions, forward_looking_labels)
+        portfolio_info, portfolio_values = s7_backtest_portfolio_formation(prices, backtest_model_predictions, forward_looking_labels, backtest_save_prefix)
         ###################################
         # 7. Backtest Portfolio Analytics #
         ###################################
-        s8_portfolio_analysis(portfolio_values)
+        s8_portfolio_analysis(portfolio_values, backtest_save_prefix)
 
     return
 
 
 if __name__ == '__main__':
     main(
-        is_generate_features=False,
+        is_generate_features=True,
         is_generate_labels=False,
-        is_generate_backtest_signals=False,
-        is_backtest_only=True,
+        is_generate_backtest_signals=True,
+        is_backtest_only=False,
         **{
             "curr_label_file": "labels_6_12_18_24_48",
             "backtest_test_models": ["simple_xgb_boost"]  # simple_random_forest

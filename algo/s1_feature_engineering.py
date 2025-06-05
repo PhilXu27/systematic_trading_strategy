@@ -23,12 +23,12 @@ def s1_feature_engineering(prices, start, end, features_save_file="default"):
     # features = simple_features(prices)
     adjusted_prices = pd.read_csv(
         Path(external_data_path, "adjusted_price.csv"),
-        parse_dates=True, dayfirst=True, index_col=0
+        parse_dates=True, index_col=0
     )
     adjusted_prices = adjusted_prices.loc[start:end]
     volume = pd.read_csv(
         Path(external_data_path, "volume.csv"),
-        parse_dates=True, dayfirst=True, index_col=0
+        parse_dates=True, index_col=0
     )
     volume = volume.loc[start:end]
 

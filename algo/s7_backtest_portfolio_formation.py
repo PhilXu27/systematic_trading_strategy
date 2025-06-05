@@ -4,8 +4,12 @@ from utils.path_info import portfolio_value_results_path
 
 
 def s7_backtest_portfolio_formation(
-    prices, backtest_model_predictions, forward_looking_labels
+    prices, backtest_model_predictions, forward_looking_labels, backtest_save_prefix
 ):
+
+    portfolio_value_save_path = Path(portfolio_value_results_path, backtest_save_prefix)
+    portfolio_value_save_path.mkdir(parents=True, exist_ok=True)
+
     try:
         forward_looking_signals = forward_looking_labels[["bin"]].map(lambda x: 1.0 if x == 1.0 else 0.0)
     except AttributeError:
@@ -18,12 +22,7 @@ def s7_backtest_portfolio_formation(
         curr_pv = curr_port_info[["portfolio_value"]]
         curr_pv.columns = [model]
         portfolio_value = pd.concat([portfolio_value, curr_pv], axis=1)
-        # if "backward_looking_benchmark" not in portfolio_info:
-        #     portfolio_info["backward_looking_benchmark"] = generate_portfolio_value(
-        #         prices, model_predictions["true"].astype(int)
-        #     )
-        #     portfolio_value = pd.concat([portfolio_value, portfolio_info["backward_looking_benchmark"]], axis=1)
-        #
+
         if "buy_and_hold" not in portfolio_info:
             bah_portfolio = generate_portfolio_value(
                 prices, pd.Series(1.0, index=model_predictions["true"].index)
@@ -33,13 +32,10 @@ def s7_backtest_portfolio_formation(
             pv.columns = ["buy_and_hold"]
             portfolio_value = pd.concat([portfolio_value, pv], axis=1)
         portfolio_info[model] = curr_port_info
-    # portfolio_info["forward_looking_benchmark"] = generate_portfolio_value(
-    #     prices, forward_looking_signals["bin"].astype(int)
-    # )
 
     for port_name, port_value in portfolio_info.items():
-        port_value.to_csv(Path(portfolio_value_results_path, f"{port_name}_info.csv"))
-    portfolio_value.to_csv(Path(portfolio_value_results_path, 'portfolio_value.csv'))
+        port_value.to_csv(Path(portfolio_value_save_path, f"{port_name}_info.csv"))
+    portfolio_value.to_csv(Path(portfolio_value_save_path, 'portfolio_value.csv'))
     return portfolio_info, portfolio_value
 
 

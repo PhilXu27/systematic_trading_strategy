@@ -33,16 +33,16 @@ def s3_model_development(experiment_data_dict):
 
 def random_forest_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
     print("Training Random Forest...")
-    # param_grid = {
-    #     'max_depth': [20],
-    #     'n_estimators': [100],
-    #     'min_samples_split': [5],
-    # }
     param_grid = {
-        'max_depth': [None, 10, 20],
-        'n_estimators': [100, 200, 500],
-        'min_samples_split': [2, 5],
+        'max_depth': [20],
+        'n_estimators': [100],
+        'min_samples_split': [5],
     }
+    # param_grid = {
+    #     'max_depth': [None, 10, 20],
+    #     'n_estimators': [100, 200, 500],
+    #     'min_samples_split': [2, 5],
+    # }
     base_params = {
         "random_state": GLOBAL_RANDOM_STATE, "min_samples_leaf": 2, "max_features": "sqrt",
     }
@@ -61,16 +61,16 @@ def random_forest_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val
 
 def gradient_boosting_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
     print("Training Gradient Boosting...")
-    # param_grid = {
-    #     'max_depth': [20],
-    #     'n_estimators': [100],
-    #     'min_samples_split': [5],
-    # }
     param_grid = {
-        'max_depth': [None, 10, 20],
-        'n_estimators': [100, 200, 500],
-        'min_samples_split': [2, 5],
+        'max_depth': [20],
+        'n_estimators': [100],
+        'min_samples_split': [5],
     }
+    # param_grid = {
+    #     'max_depth': [None, 10, 20],
+    #     'n_estimators': [100, 200, 500],
+    #     'min_samples_split': [2, 5],
+    # }
     base_params = {
         "random_state": GLOBAL_RANDOM_STATE, 
         "min_samples_leaf": 2,
@@ -126,18 +126,18 @@ def xgboost_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_va
 
 def lightgbm_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
     print("Training LightGBM...")
-    param_grid = {
-        'learning_rate': [0.01, 0.05, 0.1],
-        'n_estimators': [100, 200],
-        'max_depth': [3, 4, 6],
-        'min_child_weight': [1, 5],
-    }
     # param_grid = {
-    #     'learning_rate': [0.01],
-    #     'n_estimators': [100],
-    #     'max_depth': [3],
-    #     'min_child_weight': [5],
+    #     'learning_rate': [0.01, 0.05, 0.1],
+    #     'n_estimators': [100, 200],
+    #     'max_depth': [3, 4, 6],
+    #     'min_child_weight': [1, 5],
     # }
+    param_grid = {
+        'learning_rate': [0.01],
+        'n_estimators': [100],
+        'max_depth': [3],
+        'min_child_weight': [5],
+    }
     base_params = {
         'random_state': GLOBAL_RANDOM_STATE,
         'verbose': -1,
@@ -163,14 +163,14 @@ def lightgbm_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_v
 
 def svm_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
     print("Training SVM...")
-    param_grid = {
-        'C': [0.1, 1, 10],
-        'gamma': ['scale', 'auto', 0.01, 0.1],
-    }
     # param_grid = {
-    #     'C': [0.1],
-    #     'gamma': [100],
+    #     'C': [0.1, 1, 10],
+    #     'gamma': ['scale', 'auto', 0.01, 0.1],
     # }
+    param_grid = {
+        'C': [0.1],
+        'gamma': [100],
+    }
     base_params = {
         'random_state': GLOBAL_RANDOM_STATE,
         'probability': True,
@@ -214,7 +214,6 @@ def time_series_cv(model_class, base_params, param_grid, X_train, y_train, X_val
         elif principle == "log_loss":
             y_proba = model.predict_proba(X_val)
             score = -log_loss(y_val, y_proba)
-            # log, so take the negative sign
         else:
             raise ValueError(f"Unknown principle: {principle}")
 
