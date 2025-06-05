@@ -56,18 +56,18 @@ def random_forest_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val
 
 def xgboost_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
     print("Training XGBoost...")
-    param_grid = {
-        'learning_rate': [0.01, 0.05, 0.1],
-        'n_estimators': [100, 200],
-        'max_depth': [3, 4, 6],
-        'min_child_weight': [1, 5],
-    }
     # param_grid = {
-    #     'learning_rate': [0.05],
-    #     'n_estimators': [200],
-    #     'max_depth': [4],
-    #     'min_child_weight': [5],
+    #     'learning_rate': [0.01, 0.05, 0.1],
+    #     'n_estimators': [100, 200],
+    #     'max_depth': [3, 4, 6],
+    #     'min_child_weight': [1, 5],
     # }
+    param_grid = {
+        'learning_rate': [0.05],
+        'n_estimators': [200],
+        'max_depth': [4],
+        'min_child_weight': [5],
+    }
     base_params = {
         'random_state': GLOBAL_RANDOM_STATE,
         'subsample': 0.8,

@@ -10,27 +10,37 @@ def s7_backtest_portfolio_formation(
         forward_looking_signals = forward_looking_labels[["bin"]].map(lambda x: 1.0 if x == 1.0 else 0.0)
     except AttributeError:
         forward_looking_signals = forward_looking_labels[["bin"]].applymap(lambda x: 1.0 if x == 1.0 else 0.0)
-    portfolio_values = {}
-
+    portfolio_info = {}
+    portfolio_value = pd.DataFrame()
     for model, model_predictions in backtest_model_predictions.items():
         print(f"Running Portfolio Formation for {model}")
-        curr_port_values = generate_portfolio_value(prices, model_predictions["pred"].astype(int))
-        if "backward_looking_benchmark" not in portfolio_values:
-            portfolio_values["backward_looking_benchmark"] = generate_portfolio_value(
-                prices, model_predictions["true"].astype(int)
-            )
-        if "buy_and_hold" not in portfolio_values:
-            portfolio_values["buy_and_hold"] = generate_portfolio_value(
+        curr_port_info = generate_portfolio_value(prices, model_predictions["pred"].astype(int))
+        curr_pv = curr_port_info[["portfolio_value"]]
+        curr_pv.columns = [model]
+        portfolio_value = pd.concat([portfolio_value, curr_pv], axis=1)
+        # if "backward_looking_benchmark" not in portfolio_info:
+        #     portfolio_info["backward_looking_benchmark"] = generate_portfolio_value(
+        #         prices, model_predictions["true"].astype(int)
+        #     )
+        #     portfolio_value = pd.concat([portfolio_value, portfolio_info["backward_looking_benchmark"]], axis=1)
+        #
+        if "buy_and_hold" not in portfolio_info:
+            bah_portfolio = generate_portfolio_value(
                 prices, pd.Series(1.0, index=model_predictions["true"].index)
             )
-        portfolio_values[model] = curr_port_values
-    portfolio_values["forward_looking_benchmark"] = generate_portfolio_value(
-        prices, forward_looking_signals["bin"].astype(int)
-    )
+            portfolio_info["buy_and_hold"] = bah_portfolio
+            pv = bah_portfolio[["portfolio_value"]]
+            pv.columns = ["buy_and_hold"]
+            portfolio_value = pd.concat([portfolio_value, pv], axis=1)
+        portfolio_info[model] = curr_port_info
+    # portfolio_info["forward_looking_benchmark"] = generate_portfolio_value(
+    #     prices, forward_looking_signals["bin"].astype(int)
+    # )
 
-    for port_name, port_value in portfolio_values.items():
-        port_value.to_csv(Path(portfolio_value_results_path, f"{port_name}.csv"))
-    return portfolio_values
+    for port_name, port_value in portfolio_info.items():
+        port_value.to_csv(Path(portfolio_value_results_path, f"{port_name}_info.csv"))
+    portfolio_value.to_csv(Path(portfolio_value_results_path, 'portfolio_value.csv'))
+    return portfolio_info, portfolio_value
 
 
 def generate_portfolio_value(prices, signals):
