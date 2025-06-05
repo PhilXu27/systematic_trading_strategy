@@ -113,7 +113,6 @@ def generate_macro_features(df):
     features = pd.DataFrame(index=df.index)
 
     # DXY features
-    features["delta_dxy"] = delta(df["DXY Index"])
     features["dxy_ret_1d"] = log_return(df["DXY Index"], period=1)
 
     # Yield curve slope (US 10Y - 2Y)
@@ -180,7 +179,7 @@ def generate_price_volume_feature(data):
 
     # Volatility and trend
     features['atr_24'] = AverageTrueRange(high=data['high'], low=data['low'], close=data['close'], window=24).average_true_range()
-    bb = BollingerBands(close=data['close'], window=20, window_dev=2)
+    bb = BollingerBands(close=data['close'], window=24, window_dev=2)
     features['bb_width'] = (bb.bollinger_hband() - bb.bollinger_lband()) / bb.bollinger_mavg()
     features['ema_6'] = EMAIndicator(close=data['close'], window=6).ema_indicator()
     features['ema_24'] = EMAIndicator(close=data['close'], window=24).ema_indicator()
