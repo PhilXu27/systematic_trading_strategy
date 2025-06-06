@@ -1,5 +1,6 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 PRINT_PREFIX = None
 
 
@@ -22,6 +23,7 @@ def calculate_average_holding_period(df):
 
     average_holding_period_hours = holding_periods['holding_period_hours'].mean()
     return average_holding_period_hours
+
 
 def calculate_performance_metrics(
         input_data: pd.DataFrame,
@@ -113,6 +115,7 @@ def performance_metrics_reformat_helper(p_metrics, **kwargs):
         lambda x: datetime_reformat(x, date_format)
     )
     return reformat_metrics
+
 
 def max_drawdown_cal(input_origin_df):
     """

@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 from hmmlearn.hmm import GaussianHMM
 
 
@@ -103,6 +103,7 @@ def slope(df, near_col, far_col, normalize=True):
     if normalize:
         slope = slope / df[near_col]
     return slope
+
 
 def delta(series):
     """Computes first-order difference."""

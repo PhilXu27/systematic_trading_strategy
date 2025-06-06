@@ -1,7 +1,10 @@
-import pandas as pd
-from utils.path_info import raw_data_path, external_data_path
-from pathlib import Path
 from os.path import exists
+from pathlib import Path
+
+import pandas as pd
+
+from utils.path_info import raw_data_path, external_data_path
+
 
 def s0_data_prepare():
     ##############
@@ -52,7 +55,6 @@ def load_external_data():
     adjusted_prices[prices_ffill_cols] = adjusted_prices[prices_ffill_cols].ffill(limit=2)
     volume[volume_ffill_cols] = volume[volume_ffill_cols].ffill(limit=2)
     return
-
 
 
 if __name__ == '__main__':

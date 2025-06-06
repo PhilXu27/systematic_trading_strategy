@@ -1,16 +1,15 @@
+import pandas as pd
+
 from algo.s0_data_preparing import s0_data_prepare
 from algo.s1_feature_engineering import s1_feature_engineering, s1_load_features
-from algo.s2_creating_labels import s2_creating_labels, s2_load_labels
 from algo.s25_pre_run import s25_pre_run
+from algo.s2_creating_labels import s2_creating_labels, s2_load_labels
 from algo.s3_model_development import s3_model_development
 from algo.s4_feature_important_analysis import s4_feature_important_analysis, s4_cluster_level_importance_analysis
 from algo.s5_model_evaluation import s5_model_evaluation
 from algo.s6_backtest_model_development import s6_backtest_model_development, s6_load_backtest_signals
 from algo.s7_backtest_portfolio_formation import s7_backtest_portfolio_formation
 from algo.s8_portfolio_analysis import s8_portfolio_analysis
-from pathlib import Path
-from utils.path_info import data_path
-import pandas as pd
 
 
 def main(
@@ -21,7 +20,6 @@ def main(
 ):
     general_start = "2018-01-01" #  "2018-01-01", "2020-01-01"
     warmup_end = "2018-03-31"
-    train_end = "2020-12-31"
     test_start = "2021-01-01"
     general_end = "2021-12-31"  # "2021-12-31"
     validation_percentage = 0.2
@@ -114,7 +112,9 @@ def main(
         ###################################
         # 7. Backtest Portfolio Formation #
         ###################################
-        portfolio_info, portfolio_values = s7_backtest_portfolio_formation(prices, backtest_model_predictions, forward_looking_labels, backtest_save_prefix)
+        portfolio_info, portfolio_values = s7_backtest_portfolio_formation(
+            prices, backtest_model_predictions, forward_looking_labels, backtest_save_prefix
+        )
         ###################################
         # 7. Backtest Portfolio Analytics #
         ###################################
@@ -124,18 +124,16 @@ def main(
 
 
 if __name__ == '__main__':
-    curr_test_models = ["random_forest", "random_forest_mid", "random_forest_huge"]
-    # ["xgb_boost", "random_forest", "gradient_boost", "lightgbm"]
-    # "random_forest_huge"
-    
+    curr_test_models = ["xgb_boost", "random_forest", "gradient_boost", "lightgbm"]
+
     main(
-        is_generate_features=False,
-        is_generate_labels=False,
+        is_generate_features=True,
+        is_generate_labels=True,
         is_generate_backtest_signals=True,
-        is_backtest_only=True,
+        is_backtest_only=True,  # If you want to run backtest, turn it on; if you want to tune the model, turn if off.
         training_mode="parallel_rolling_window",  # "parallel_expanding_window", "parallel_rolling_window"
         **{
             "curr_label_file": "labels_6_12_18_24_48",
-            "backtest_test_models": curr_test_models,  # simple_random_forest
+            "backtest_test_models": curr_test_models,
         }
     )

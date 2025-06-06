@@ -1,22 +1,24 @@
 from pathlib import Path
-from utils.path_info import features_data_path
+
+import numpy as np
 import pandas as pd
+from ta.momentum import ROCIndicator, RSIIndicator
+from ta.trend import EMAIndicator, MACD
+from ta.volatility import AverageTrueRange, BollingerBands
+
 from algo.s1_helper import (
     returns, liquidity_proxy, realized_volatility, trend_duration, volume_volatility_ratio, compute_hmm_regime,
-    slope, slope_long, curve_curvature, curve_skewness, log_return, rolling_volatility, delta, ratio,
+    slope, curve_curvature, curve_skewness, log_return, rolling_volatility, delta, ratio,
     btc_nearby_volume, btc_total_volume, roll_activity_ratio
 )
-import numpy as np
-from ta.momentum import ROCIndicator, RSIIndicator
-from ta.volatility import AverageTrueRange, BollingerBands
-from ta.trend import EMAIndicator, MACD
-from pathlib import Path
 from utils.path_info import external_data_path
+from utils.path_info import features_data_path
 
 
 def s1_load_features(features_file="default"):
     features = pd.read_csv(Path(features_data_path, features_file + ".csv"), index_col=0, parse_dates=True)
     return features
+
 
 def s1_feature_engineering(prices, start, end, features_save_file="default"):
     print("S1 Feature Engineering, Starts")
@@ -190,7 +192,8 @@ def generate_price_volume_feature(data):
     features['rsi_24'] = RSIIndicator(close=data['close'], window=24).rsi()
 
     # Volatility and trend
-    features['atr_24'] = AverageTrueRange(high=data['high'], low=data['low'], close=data['close'], window=24).average_true_range()
+    features['atr_24'] = AverageTrueRange(high=data['high'], low=data['low'], close=data['close'],
+                                          window=24).average_true_range()
     bb = BollingerBands(close=data['close'], window=24, window_dev=2)
     features['bb_width_24'] = (bb.bollinger_hband() - bb.bollinger_lband()) / bb.bollinger_mavg()
 
@@ -203,14 +206,15 @@ def generate_price_volume_feature(data):
     # SMAs and crossover
     features['sma_6'] = data['close'].rolling(6).mean()
     features['sma_24'] = data['close'].rolling(24).mean()
-    features['cross_signal'] = np.where(features['sma_6'] > features['sma_24'], 1, np.where(features['sma_6'] < features['sma_24'], -1, 0))
+    features['cross_signal'] = np.where(features['sma_6'] > features['sma_24'], 1,
+                                        np.where(features['sma_6'] < features['sma_24'], -1, 0))
 
     # Serial correlation
     for lag in [1, 2, 5]:
         features[f'autocorr_{lag}'] = data['returns'].rolling(20).corr(data['returns'].shift(lag))
 
     # Lagged returns & volume
-    for lag in [1, 2, 3, 5,]:
+    for lag in [1, 2, 3, 5, ]:
         features[f'lag_return_{lag}'] = data['returns'].shift(lag)
     for lag in [1, 2, 3]:
         features[f'lag_volume_{lag}'] = data['volume'].shift(lag)

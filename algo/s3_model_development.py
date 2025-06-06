@@ -1,12 +1,12 @@
-import pandas as pd
-from configs.GLOBAL_CONFIG import GLOBAL_RANDOM_STATE
-import numpy as np
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.model_selection import ParameterGrid
-import xgboost as xgb
 import lightgbm as lgb
+import numpy as np
+import xgboost as xgb
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss
+from sklearn.model_selection import ParameterGrid
+from sklearn.svm import SVC
+
+from configs.GLOBAL_CONFIG import GLOBAL_RANDOM_STATE
 
 
 def s3_model_development(experiment_data_dict):
@@ -59,6 +59,7 @@ def random_forest_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val
     print(f"Test Accuracy: {test_acc:.4f}")
     return rf_model
 
+
 def gradient_boosting_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
     print("Training Gradient Boosting...")
     param_grid = {
@@ -72,12 +73,13 @@ def gradient_boosting_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X
     #     'min_samples_split': [2, 5],
     # }
     base_params = {
-        "random_state": GLOBAL_RANDOM_STATE, 
+        "random_state": GLOBAL_RANDOM_STATE,
         "min_samples_leaf": 2,
         "max_features": "sqrt",
     }
 
-    best_rf, best_rf_score, best_params = time_series_cv(model_class=GradientBoostingClassifier, base_params=base_params,
+    best_rf, best_rf_score, best_params = time_series_cv(model_class=GradientBoostingClassifier,
+                                                         base_params=base_params,
                                                          param_grid=param_grid, X_train=X_hyper_train,
                                                          y_train=y_hyper_train, X_val=X_val, y_val=y_val)
     # Predict on test set
@@ -88,6 +90,7 @@ def gradient_boosting_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X
     test_acc = accuracy_score(y_test, y_pred)
     print(f"Test Accuracy: {test_acc:.4f}")
     return gb_model
+
 
 def xgboost_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
     print("Training XGBoost...")
@@ -123,6 +126,7 @@ def xgboost_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_va
     test_acc = accuracy_score(y_test, y_pred)
     print(f"Test Accuracy: {test_acc:.4f}")
     return xgb_model
+
 
 def lightgbm_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
     print("Training LightGBM...")
@@ -160,7 +164,6 @@ def lightgbm_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_v
     return lgbm_model
 
 
-
 def svm_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X_test, y_test):
     print("Training SVM...")
     # param_grid = {
@@ -174,7 +177,7 @@ def svm_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X
     base_params = {
         'random_state': GLOBAL_RANDOM_STATE,
         'probability': True,
-        'kernel': 'rbf', # you can choose one from ['precomputed', 'linear', 'rbf', 'poly', 'sigmoid']
+        'kernel': 'rbf',  # you can choose one from ['precomputed', 'linear', 'rbf', 'poly', 'sigmoid']
     }
     best_rf, best_rf_score, best_params = time_series_cv(model_class=SVC, base_params=base_params,
                                                          param_grid=param_grid, X_train=X_hyper_train,
@@ -187,6 +190,7 @@ def svm_one_time(X_train, y_train, X_hyper_train, y_hyper_train, X_val, y_val, X
     test_acc = accuracy_score(y_test, y_pred)
     print(f"Test Accuracy: {test_acc:.4f}")
     return svm_model
+
 
 def time_series_cv(model_class, base_params, param_grid, X_train, y_train, X_val, y_val, principle="score"):
     assert principle in ["score", "AUC", "F1"]

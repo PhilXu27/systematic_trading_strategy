@@ -1,19 +1,20 @@
-from algo.s8_helper import calculate_performance_metrics, calculate_average_holding_period
-from algo.s2_creating_labels import s2_load_labels
-from algo.s0_data_preparing import s0_data_prepare
 from pathlib import Path
-from utils.path_info import final_backtest_results_path, results_path
-import pandas as pd
-import seaborn as sns
+
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 
+from algo.s0_data_preparing import s0_data_prepare
+from algo.s2_creating_labels import s2_load_labels
+from algo.s8_helper import calculate_performance_metrics, calculate_average_holding_period
+from utils.path_info import final_backtest_results_path, results_path
 
 sns.set(style="whitegrid", rc={"figure.figsize": (12, 6)})  # Set figure size to 12x6 inches
 plt.rcParams.update({
-    "font.size": 12,        # General font size
-    "axes.titlesize": 14,   # Title font size
-    "axes.labelsize": 12,   # Axis label font size
+    "font.size": 12,  # General font size
+    "axes.titlesize": 14,  # Title font size
+    "axes.labelsize": 12,  # Axis label font size
     "xtick.labelsize": 10,  # X-axis tick label size
     "ytick.labelsize": 10,  # Y-axis tick label size
     "legend.fontsize": 10,  # Legend font size
@@ -32,7 +33,9 @@ def load_results(sub_result):
         curr_info = pd.read_csv(Path(info_dir, f"{model}_info.csv"), index_col=0, parse_dates=True)
         average_holding_period[model] = calculate_average_holding_period(curr_info)
 
-    portfolio_value = pd.read_csv(Path(final_backtest_results_path, "portfolio_value", sub_result, "portfolio_value.csv"), index_col=0, parse_dates=True)
+    portfolio_value = pd.read_csv(
+        Path(final_backtest_results_path, "portfolio_value", sub_result, "portfolio_value.csv"), index_col=0,
+        parse_dates=True)
     _, pmetrics = calculate_performance_metrics(
         portfolio_value, annualized_factor=24 * 365, is_reformat=True, is_mdd_detail=True
     )
@@ -40,10 +43,9 @@ def load_results(sub_result):
     pmetrics.to_csv(Path(clean_result_path, f"pmetrics_{sub_result}.csv"))
     return portfolio_value
 
+
 def performance_analysis():
     return
-
-
 
 
 def main():

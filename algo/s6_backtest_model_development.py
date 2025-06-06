@@ -1,13 +1,16 @@
-import pandas as pd
-from pathlib import Path
-from utils.path_info import results_path, signals_results_path
-from configs.MODEL_CONFIG import MODEL_CONFIG
-from xgboost import XGBClassifier
-from algo.s3_model_development import time_series_cv
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from multiprocessing import Pool
 import multiprocessing
+from multiprocessing import Pool
+from pathlib import Path
+
+import pandas as pd
 from lightgbm import LGBMClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from xgboost import XGBClassifier
+
+from algo.s3_model_development import time_series_cv
+from configs.MODEL_CONFIG import MODEL_CONFIG
+from utils.path_info import signals_results_path
+
 
 def backtest_data_prepare(labels, features):
     bins = labels[["bin"]]
@@ -68,13 +71,15 @@ def s6_backtest_model_development(
         )
     elif training_mode == "parallel_expanding_window":
         all_predictions = parallel_backtest(
-            training_mode, data_all, retrain_timestamps, rebalance_timestamps, validation_percentage, backtest_test_models
+            training_mode, data_all, retrain_timestamps, rebalance_timestamps, validation_percentage,
+            backtest_test_models
         )
     elif training_mode == "parallel_rolling_window":
         window_size = kwargs.get("window_size", 30 * 24 * 12)
         warmup_size = kwargs.get("warmup_size", 30 * 24)
         all_predictions = parallel_backtest(
-            training_mode, data_all, retrain_timestamps, rebalance_timestamps, validation_percentage, backtest_test_models,
+            training_mode, data_all, retrain_timestamps, rebalance_timestamps, validation_percentage,
+            backtest_test_models,
             window_size, warmup_size
         )
     else:
@@ -260,7 +265,8 @@ def parallel_backtest(
             if training_mode == "parallel_expanding_window":
                 batch_ranges.append((model, model_config, i, data_all, validation_percentage, rebalance_ts_batch))
             elif training_mode == "parallel_rolling_window":
-                batch_ranges.append((model, model_config, i, data_all, validation_percentage, rebalance_ts_batch, window_size, warmup_size))
+                batch_ranges.append((model, model_config, i, data_all, validation_percentage, rebalance_ts_batch,
+                                     window_size, warmup_size))
             else:
                 raise ValueError
 
@@ -273,6 +279,7 @@ def parallel_backtest(
         all_predictions[model] = full_model_df
 
     return all_predictions
+
 
 def expanding_window_backtest(
         data_all, retrain_timestamps, rebalance_timestamps,
@@ -336,10 +343,10 @@ def expanding_window_backtest(
         all_predictions[model] = pred_df
     return all_predictions
 
+
 def rolling_window_backtest(
         data_all, retrain_timestamps, rebalance_timestamps, validation_percentage, test_models, window_size, warmup_size
 ):
-
     all_predictions = {}
     for model in test_models:
         model_setting = MODEL_CONFIG[model]
@@ -425,6 +432,7 @@ def simple_random_forest(
     y_pred = rf_model.predict(X_test)
     return rf_model, y_pred
 
+
 def simple_xgb_boost(
         model_class, base_params, param_grid,
         X_train, y_train, X_hyper_train, y_hyper_train,
@@ -439,6 +447,7 @@ def simple_xgb_boost(
     y_pred = xgb_model.predict(X_test)
     return xgb_model, y_pred
 
+
 def simple_gradient_boost(
         model_class, base_params, param_grid,
         X_train, y_train, X_hyper_train, y_hyper_train,
@@ -452,6 +461,7 @@ def simple_gradient_boost(
     xgb_model.fit(X_train, y_train)
     y_pred = xgb_model.predict(X_test)
     return xgb_model, y_pred
+
 
 def simple_lightgbm(
         model_class, base_params, param_grid,

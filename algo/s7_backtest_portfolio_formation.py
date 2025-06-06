@@ -1,12 +1,13 @@
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
+
 from utils.path_info import portfolio_value_results_path
 
 
 def s7_backtest_portfolio_formation(
-    prices, backtest_model_predictions, forward_looking_labels, backtest_save_prefix
+        prices, backtest_model_predictions, forward_looking_labels, backtest_save_prefix
 ):
-
     portfolio_value_save_path = Path(portfolio_value_results_path, backtest_save_prefix)
     portfolio_value_save_path.mkdir(parents=True, exist_ok=True)
 

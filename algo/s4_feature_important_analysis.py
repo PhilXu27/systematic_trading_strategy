@@ -1,17 +1,19 @@
-import pandas as pd
-import numpy as np
-from sklearn.decomposition import PCA
-from sklearn.metrics import silhouette_samples, silhouette_score
 from pathlib import Path
-from utils.path_info import feature_importance_results_path
+
 import matplotlib.pyplot as plt
-from sklearn.metrics import calinski_harabasz_score, davies_bouldin_score
-from sklearn.cluster import KMeans
-from configs.GLOBAL_CONFIG import GLOBAL_RANDOM_STATE
-from sklearn.inspection import permutation_importance
-from sklearn.mixture import GaussianMixture
+import numpy as np
+import pandas as pd
 import seaborn as sns
 from scipy.stats import spearmanr
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.inspection import permutation_importance
+from sklearn.metrics import calinski_harabasz_score, davies_bouldin_score
+from sklearn.metrics import silhouette_score
+from sklearn.mixture import GaussianMixture
+
+from configs.GLOBAL_CONFIG import GLOBAL_RANDOM_STATE
+from utils.path_info import feature_importance_results_path
 
 
 def s4_feature_important_analysis(models, experiment_data_dict):
@@ -28,6 +30,7 @@ def s4_feature_important_analysis(models, experiment_data_dict):
         feature_important_results[model_name] = fi_metrics
     print("S4 Feature Important Analysis, Ends")
     return feature_important_results
+
 
 def plot_mdi_importance(model, model_name, X_train, n_features=20):
     """Plot MDI feature importance for tree-based models"""
@@ -55,6 +58,7 @@ def plot_mdi_importance(model, model_name, X_train, n_features=20):
     plt.savefig(Path(feature_importance_results_path, f'{model_name}_mdi_importance.png'))
 
     return mdi_importance
+
 
 def plot_permutation_importance(model, model_name, X_train, y_train, X_test, y_test, n_features=10):
     """Plot permutation feature importance"""
@@ -85,7 +89,6 @@ def plot_permutation_importance(model, model_name, X_train, y_train, X_test, y_t
     plt.tight_layout()
     plt.savefig(Path(feature_importance_results_path, f'{model_name}_pfi_importance.png'))
     return perm_df
-
 
 
 def s4_cluster_level_importance_analysis(models, experiment_data_dict):
@@ -146,6 +149,7 @@ def plot_cluster_mdi(cluster_imp_mdi, model_name):
     plt.savefig(Path(feature_importance_results_path, f"{model_name}_cluster_mdi_importance.png"))
     return
 
+
 def plot_cluster_pfi(cluster_imp_pfi, model_name):
     plt.figure(figsize=(10, 8))
     cluster_imp_pfi.sort_values('mean').plot(
@@ -162,6 +166,7 @@ def plot_cluster_pfi(cluster_imp_pfi, model_name):
     plt.grid(axis='x', linestyle='--', alpha=0.7)
     plt.tight_layout()
     plt.savefig(Path(feature_importance_results_path, f"{model_name}_cluster_pfi_importance.png"))
+
 
 def calculate_cluster_importance_mdi(model, feature_names, clusters):
     """
@@ -184,7 +189,7 @@ def calculate_cluster_importance_mdi(model, feature_names, clusters):
     # Extract feature importance from all trees
     if hasattr(model, 'estimators_'):
         importances = {i: tree.feature_importances_
-                      for i, tree in enumerate(model.estimators_)}
+                       for i, tree in enumerate(model.estimators_)}
     else:
         importances = {0: model.feature_importances_}
 
@@ -210,7 +215,7 @@ def calculate_cluster_importance_mdi(model, feature_names, clusters):
             cluster_importance.loc[f'Cluster_{cluster_id}', 'mean'] = cluster_imp.mean()
             if len(cluster_imp) > 1:
                 cluster_importance.loc[f'Cluster_{cluster_id}', 'std'] = (
-                    cluster_imp.std() * cluster_imp.shape[0]**-0.5
+                        cluster_imp.std() * cluster_imp.shape[0] ** -0.5
                 )
             else:
                 cluster_importance.loc[f'Cluster_{cluster_id}', 'std'] = 0
@@ -300,7 +305,7 @@ def calculate_cluster_importance_pfi(model, X, y, clusters, cv=5, scoring='neg_l
     # Calculate mean and std
     cluster_importance = pd.DataFrame({
         'mean': importance.mean(),
-        'std': importance.std() * importance.shape[0]**-0.5
+        'std': importance.std() * importance.shape[0] ** -0.5
     })
 
     # Rename index for clarity
@@ -343,7 +348,6 @@ def plot_cluster_score(cluster_range, scores, optimal_clusters):
     plt.legend()
     plt.savefig(Path(feature_importance_results_path, f'cluster_score.png'))
     return
-
 
 
 def plot_corr_and_distance(X_train, distance_matrix):
@@ -417,6 +421,7 @@ class OptimalClusterer:
     random_state : int, default=42
         Random seed for reproducibility
     """
+
     def __init__(self, variance_threshold=0.95, max_clusters=10, random_state=42):
         self.variance_threshold = variance_threshold
         self.max_clusters = max_clusters
@@ -488,7 +493,7 @@ class OptimalClusterer:
         """
         scores = []
         methods = {'silhouette': silhouette_score, 'calinski': calinski_harabasz_score, 'davies': davies_bouldin_score}
-        for k in range(2, self.max_clusters+1):
+        for k in range(2, self.max_clusters + 1):
             kmeans = KMeans(n_clusters=k, random_state=self.random_state).fit(self.pca_data)
             if method == 'davies':
                 score = -methods[method](self.pca_data, kmeans.labels_)
@@ -538,9 +543,9 @@ class OptimalClusterer:
             belonging to each cluster (columns)
         """
         gmm = GaussianMixture(n_components=self.optimal_k, random_state=self.random_state,
-                             means_init=self.kmeans.cluster_centers_, reg_covar=reg_covar)
+                              means_init=self.kmeans.cluster_centers_, reg_covar=reg_covar)
         gmm.fit(self.pca_data)
         gmm_probs = gmm.predict_proba(self.pca_data)
         gmm_df = pd.DataFrame(gmm_probs, index=self.features,
-                             columns=[f'Cluster_{i}' for i in range(self.optimal_k)])
+                              columns=[f'Cluster_{i}' for i in range(self.optimal_k)])
         return gmm_df

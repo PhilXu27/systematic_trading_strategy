@@ -1,14 +1,16 @@
-import pandas as pd
-import numpy as np
-import statsmodels.api as sm1
-from utils.path_info import label_data_path
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm1
+
+from utils.path_info import label_data_path
 
 
 def s2_load_labels(file_name):
-    labels = pd.read_csv(Path(label_data_path,  f"{file_name}.csv"), index_col=0, parse_dates=True)
+    labels = pd.read_csv(Path(label_data_path, f"{file_name}.csv"), index_col=0, parse_dates=True)
     forward_looking_labels = pd.read_csv(
-        Path(label_data_path,  f"forward_looking_{file_name}.csv"), index_col=0, parse_dates=True
+        Path(label_data_path, f"forward_looking_{file_name}.csv"), index_col=0, parse_dates=True
     )
     return labels, forward_looking_labels
 
