@@ -29,7 +29,7 @@ MODEL_CONFIG = {
             "max_features": "sqrt"
         },
         "param_grid": {
-            "max_depth": [None, 10],
+            "max_depth": [10],
             "n_estimators": [100],
             "min_samples_split": [2, 5]
         }
@@ -43,8 +43,8 @@ MODEL_CONFIG = {
             "max_features": "sqrt",
         },
         "param_grid": {
-            'max_depth': [None, 10],
-            'n_estimators': [100, 200],
+            'max_depth': [10],
+            'n_estimators': [100],
             'min_samples_split': [2, 5],
         }
     },
@@ -61,9 +61,40 @@ MODEL_CONFIG = {
             'objective': 'binary',
         },
         "param_grid": {
-            'learning_rate': [0.01, 0.05],
-            'n_estimators': [100, 200],
+            'learning_rate': [0.01],
+            'n_estimators': [100],
             'max_depth': [3, 6]
         }
-    }
+    },
+    "random_forest_mid": {
+        "model_func": "simple_random_forest",
+        "model_class": "RandomForestClassifier",
+        "base_params": {
+            "random_state": GLOBAL_RANDOM_STATE,
+            "min_samples_leaf": 2,
+            "max_features": "sqrt"
+        },
+        "param_grid": {
+            "max_depth": [None, 10, 20],
+            "n_estimators": [100, 200],
+            "min_samples_split": [2, 5],
+            "min_samples_leaf": [2, 5],
+        }
+    },
+    "random_forest_huge": {
+        "model_func": "simple_random_forest",
+        "model_class": "RandomForestClassifier",
+        "base_params": {
+            "random_state": GLOBAL_RANDOM_STATE,
+            "min_samples_leaf": 2,
+            "max_features": "sqrt"
+        },
+        "param_grid": {
+            "max_depth": [None, 10, 20],
+            "n_estimators": [100, 200],
+            "min_samples_split": [2, 5],
+            "min_samples_leaf": [2, 5, 10],
+            "max_features": ["log2", "sqrt"]
+        }
+    },
 }

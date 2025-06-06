@@ -2,6 +2,27 @@ import pandas as pd
 import numpy as np
 PRINT_PREFIX = None
 
+
+def calculate_average_holding_period(df):
+    assert "position" in df.columns
+    df['holding'] = (df['portfolio_value'] != 0) & (df['position'] != 0)  # True where position is held
+    df['holding_group'] = (df['holding'] != df['holding'].shift()).cumsum()  # Identify continuous holding periods
+
+    holding_df = df[df['holding']]
+
+    holding_periods = holding_df.groupby('holding_group').apply(
+        lambda x: pd.Series({
+            'start_date': x.index.min(),
+            'end_date': x.index.max()
+        })
+    )
+
+    holding_periods['holding_period_hours'] = (holding_periods['end_date'] - holding_periods[
+        'start_date']).dt.total_seconds() / 3600
+
+    average_holding_period_hours = holding_periods['holding_period_hours'].mean()
+    return average_holding_period_hours
+
 def calculate_performance_metrics(
         input_data: pd.DataFrame,
         start: str = "1900-01-01", end: str = "2100-01-01", frequency: str = "D",

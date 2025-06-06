@@ -26,7 +26,7 @@ model_evaluation_results_path = Path(results_path, 'model_evaluation_results')
 portfolio_value_results_path = Path(results_path, 'portfolio_value')
 portfolio_analytics_results_path = Path(results_path, 'portfolio_analytics')
 part_1_results_path = Path(results_path, 'part_1')
-
+final_backtest_results_path = Path(results_path, 'final_backtest_results')
 ############
 # Make Dir #
 ############
@@ -40,6 +40,7 @@ portfolio_value_results_path.mkdir(parents=True, exist_ok=True)
 feature_importance_results_path.mkdir(parents=True, exist_ok=True)
 model_evaluation_results_path.mkdir(parents=True, exist_ok=True)
 portfolio_analytics_results_path.mkdir(parents=True, exist_ok=True)
+final_backtest_results_path.mkdir(parents=True, exist_ok=True)
 
 part_1_data_path.mkdir(parents=True, exist_ok=True)
 part_1_results_path.mkdir(parents=True, exist_ok=True)

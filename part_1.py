@@ -27,9 +27,6 @@ plt.ylabel('Feature 2')
 plt.grid(True)
 plt.savefig(Path(part_1_results_path, "hmm_plot.png"))
 
-# Assume X is your data matrix (rows are i.i.d. observations)
-# Example: X = np.array([[...], [...], ...])
-
 # Fit GMM with 3 components
 gmm = GaussianMixture(n_components=3, random_state=42)
 gmm.fit(X)

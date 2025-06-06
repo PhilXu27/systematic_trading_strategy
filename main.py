@@ -14,6 +14,7 @@ import pandas as pd
 
 
 def main(
+        training_mode="parallel_rolling_window",
         is_generate_features=False, is_generate_labels=True,
         is_backtest_only=False, is_generate_backtest_signals=True,
         **kwargs
@@ -90,16 +91,14 @@ def main(
         ############################################
         # 6. Backtest & Backtest Model Development #
         ############################################
-        rebalance_frequency = "3h"
-        retrain_frequency = "24h"
-        training_mode = "parallel_expanding_window"
+        rebalance_frequency = "120h"
+        retrain_frequency = "720h"
         assert training_mode in [
             "expanding_window", "rolling_window",
             "parallel_expanding_window", "parallel_rolling_window"
         ]
         backtest_save_prefix = f"rebalance_{rebalance_frequency}_retrain_{retrain_frequency}_mode_{training_mode}"
 
-        # parallel_rolling_window todo later.
         if is_generate_backtest_signals:
             backtest_model_predictions = s6_backtest_model_development(
                 labels, features,
@@ -125,15 +124,18 @@ def main(
 
 
 if __name__ == '__main__':
-    curr_test_models = ["xgb_boost"]  # ["xgb_boost", "random_forest", "gradient_boost", "lightgbm"]
+    curr_test_models = ["random_forest", "random_forest_mid", "random_forest_huge"]
+    # ["xgb_boost", "random_forest", "gradient_boost", "lightgbm"]
+    # "random_forest_huge"
     
     main(
         is_generate_features=False,
         is_generate_labels=False,
         is_generate_backtest_signals=True,
         is_backtest_only=True,
+        training_mode="parallel_rolling_window",  # "parallel_expanding_window", "parallel_rolling_window"
         **{
             "curr_label_file": "labels_6_12_18_24_48",
-            "backtest_test_models": curr_test_models  # simple_random_forest
+            "backtest_test_models": curr_test_models,  # simple_random_forest
         }
     )
